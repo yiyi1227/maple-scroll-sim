@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>楓之谷卷軸模擬器test</title>
+  <title>楓之谷卷軸模擬器（手機支援）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { box-sizing: border-box; }
@@ -88,7 +88,7 @@
 </head>
 <body>
 
-<h2>🍁 楓之谷拖曳 + 點擊卷軸模擬器</h2>
+<h2>🍁 楓之谷卷軸模擬器</h2>
 
 <div class="controls">
   裝備類型：
@@ -129,41 +129,35 @@ document.querySelectorAll('.scroll img').forEach(img => {
 });
 
 function generateEquips(){
-  const area = document.getElementById('equipArea');
-  area.innerHTML = '';
-  total60 = total10 = totalSucc = totalUsed = 0;
-  selectedScroll = null;
-  document.querySelectorAll('.scroll img').forEach(i=>i.classList.remove('selected'));
-  updateSummary();
+  const area=document.getElementById('equipArea');
+  area.innerHTML='';
+  total60=total10=totalSucc=totalUsed=0; updateSummary();
 
-  const type = document.getElementById('equipType').value;
-  const cnt = parseInt(document.getElementById('equipCount').value);
+  const type=document.getElementById('equipType').value;
+  const cnt=parseInt(document.getElementById('equipCount').value);
 
-  for(let i=1; i<=cnt; i++){
-    const div = document.createElement('div');
-    div.className = 'equip';
-    div.dataset.max = equipMax[type];
-    div.dataset.used = 0;
-    div.dataset.succ = 0;
-    div.dataset.idx = i;
+  for(let i=1;i<=cnt;i++){
+    const div=document.createElement('div'); div.className='equip';
+    div.dataset.max=equipMax[type]; div.dataset.used=0; div.dataset.succ=0; div.dataset.idx=i;
 
-    div.innerHTML = `
+    div.innerHTML=`
       <div class="equip-title" id="title-${i}">
         ${type==='glove'?'🧤 手套':'⚔️ 武器'} #${i}（0/${equipMax[type]}）
       </div>
       <div style="text-align:center"><img src="${equipImg[type]}"></div>
       <div class="equip-log" id="log-${i}">尚未使用卷軸</div>`;
 
-    div.ondragover = e => e.preventDefault();
-    div.ondrop = e => {
+    div.ondragover=e=>e.preventDefault();
+    div.ondrop=e=>{
       e.preventDefault();
       const rate = parseInt(e.dataTransfer.getData('rate'));
       applyScroll(div, rate);
     };
-    div.addEventListener('click', () => {
-      if(selectedScroll !== null){
-        applyScroll(div, selectedScroll);
-      }
+
+    ['click','pointerup'].forEach(ev=>{
+      div.addEventListener(ev, () => {
+        if (selectedScroll !== null) applyScroll(div, selectedScroll);
+      });
     });
 
     area.appendChild(div);
@@ -171,31 +165,33 @@ function generateEquips(){
 }
 
 function applyScroll(equip, rate){
-  let used = +equip.dataset.used, succ = +equip.dataset.succ;
-  const max = +equip.dataset.max, idx = equip.dataset.idx;
-  if(used >= max){ alert('❌ 此裝備已無法再使用卷軸！'); return; }
+  if (isNaN(rate)) return;
 
-  const ok = Math.random() <= rate / 100;
+  let used=+equip.dataset.used, succ=+equip.dataset.succ;
+  const max=+equip.dataset.max, idx=equip.dataset.idx;
+  if(used>=max){ alert('❌ 此裝備已無法再使用卷軸！'); return; }
+
+  const ok=Math.random()<=rate/100;
   if(ok) succ++; used++;
-  equip.dataset.used = used;
-  equip.dataset.succ = succ;
+  equip.dataset.used=used; equip.dataset.succ=succ;
 
-  if(rate === 60) total60++; else total10++;
+  if(rate===60) total60++; else total10++;
   if(ok) totalSucc++; totalUsed++; updateSummary();
 
-  if(used > succ) equip.classList.add('failed');
+  if(used>succ) equip.classList.add('failed');
 
-  const title = document.getElementById('title-'+idx);
-  title.innerText = title.innerText.split('（')[0] + `（${succ}/${max}）`;
+  const title=document.getElementById('title-'+idx);
+  title.innerText=title.innerText.split('（')[0]+`（${succ}/${max}）`;
 
-  const log = document.getElementById('log-'+idx);
-  if(used === 1) log.innerHTML = '';
-  log.innerHTML += `第 ${used}/${max} 次 (${rate}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
-  log.scrollTop = log.scrollHeight;
+  const log=document.getElementById('log-'+idx);
+  if(used===1) log.innerHTML='';
+  log.innerHTML+=`第 ${used}/${max} 次 (${rate}%): ${ok?'✅ 成功':'❌ 失敗'}<br>`;
+  log.scrollTop=log.scrollHeight;
 }
 
 function updateSummary(){
-  const rate = totalUsed ? (totalSucc/totalUsed*100).toFixed(1) : '0.0';
+  const rate=totalUsed? (totalSucc/totalUsed*100).toFixed(1):'0.0';
+
   const stat = {};
   document.querySelectorAll('.equip').forEach(e => {
     const s = parseInt(e.dataset.succ);
@@ -210,20 +206,16 @@ function updateSummary(){
 }
 
 function resetAll(){
-  document.querySelectorAll('.equip').forEach(equip=>{
-    const max = +equip.dataset.max;
-    equip.dataset.used = 0;
-    equip.dataset.succ = 0;
-    equip.classList.remove('failed');
-    const idx = equip.dataset.idx;
-    document.getElementById(`title-${idx}`).innerText =
-      document.getElementById(`title-${idx}`).innerText.split('（')[0] + `（0/${max}）`;
-    document.getElementById(`log-${idx}`).innerHTML = '尚未使用卷軸';
+  document.querySelectorAll('.equip').forEach(e => {
+    e.dataset.used = '0';
+    e.dataset.succ = '0';
+    e.classList.remove('failed');
+    const idx = e.dataset.idx;
+    document.getElementById('title-'+idx).innerText =
+      (e.querySelector('.equip-title').innerText.split('（')[0]) + `（0/${e.dataset.max}）`;
+    document.getElementById('log-'+idx).innerText = '尚未使用卷軸';
   });
-
   total60 = total10 = totalSucc = totalUsed = 0;
-  selectedScroll = null;
-  document.querySelectorAll('.scroll img').forEach(i=>i.classList.remove('selected'));
   updateSummary();
 }
 
