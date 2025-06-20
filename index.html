@@ -314,19 +314,23 @@ function updateSummary() {
      ▶️ 10%卷軸全過：${atLeastOne10}%`;
   }
 
-  document.getElementById('summary').innerHTML =
-  `60% 卷軸：${total60} 張｜10% 卷軸：${total10} 張｜成功：${totalSucc} / ${totalUsed}（${rate} %）<br>
-   🎯 <b>成功捲數分布：</b> ${buildStatBar()}
-   <hr style="border:0;border-top:1px dashed #aaa; margin:7px 0 4px 0">
-   ${passStr}
-   <div class="summary-scroll-fixed" id="summaryScrollBar">
-      <div style="width:100%;font-size:13px; color:#885; margin-bottom:3px; text-align:center;">
-        選擇卷軸
-      </div>
-      <img src="scroll60.png" data-rate="60" title="60% 卷軸">
-      <img src="scroll10.png" data-rate="10" title="10% 卷軸">
-   </div>`;
+  // 動態提示文字
+  let scrollLabel = "選擇卷軸";
+  if (selectedScroll === 60) scrollLabel = "60%捲";
+  if (selectedScroll === 10) scrollLabel = "10%捲";
 
+  document.getElementById('summary').innerHTML =
+    `60% 卷軸：${total60} 張｜10% 卷軸：${total10} 張｜成功：${totalSucc} / ${totalUsed}（${rate} %）<br>
+     🎯 <b>成功捲數分布：</b> ${buildStatBar()}
+     <hr style="border:0;border-top:1px dashed #aaa; margin:7px 0 4px 0">
+     ${passStr}
+     <div class="summary-scroll-fixed" id="summaryScrollBar">
+        <div style="width:100%;font-size:13px; color:#885; margin-bottom:3px; text-align:center;">
+          ${scrollLabel}
+        </div>
+        <img src="scroll60.png" data-rate="60" title="60% 卷軸">
+        <img src="scroll10.png" data-rate="10" title="10% 卷軸">
+     </div>`;
 
   // 卷軸選擇區點選、拖曳事件重新綁定
   document.querySelectorAll('.summary-scroll-fixed img').forEach(img => {
@@ -334,11 +338,13 @@ function updateSummary() {
       selectedScroll = parseInt(img.dataset.rate);
       document.querySelectorAll('.summary-scroll-fixed img').forEach(i => i.classList.remove('selected'));
       img.classList.add('selected');
+      updateSummary(); // 讓標題能及時刷新
     });
     img.addEventListener('dragstart', e => e.dataTransfer.setData('rate', img.dataset.rate));
     if (selectedScroll == img.dataset.rate) img.classList.add('selected');
   });
 }
+
 function resetAll() {
   window.equips.forEach(e => {
     const max = +e.dataset.max, idx = e.dataset.idx, isDian = e.dataset.dian === "1";
