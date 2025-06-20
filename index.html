@@ -81,18 +81,31 @@
     white-space:nowrap; z-index:2;
   }
   @media (max-width:600px) {
-    .layout{flex-direction:column;align-items:center}
-    .scroll{width:100%;max-width:300px;order:-1}
-    .equip-area{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));width:100%}
-    h2{font-size:18px}.controls{font-size:12px}
-    .bar,.bar-num{width:18px;}
-    #summary {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      box-shadow: 0 3px 8px -3px #8884;
-    }
+  .scroll {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    max-width: 100vw;
+    z-index: 1200;
+    background: #fff7cd !important; /* 你想要的底色，這裡用溫柔黃色 */
+    box-shadow: 0 3px 10px -4px #9994;
+    border-radius: 0 0 12px 12px;
+    margin: 0;
+    border-top-left-radius:0;
+    border-top-right-radius:0;
   }
+  #summary {
+    position: sticky;
+    top: 74px; /* scroll 卷軸高度＋間隔，讓 summary 在卷軸下方 */
+    z-index: 1100;
+    box-shadow: 0 3px 8px -3px #8884;
+  }
+  .layout {
+    padding-top: 86px; /* 預留卷軸吸頂空間，視覺不卡住 */
+  }
+}
+
 </style>
 </head>
 <body>
