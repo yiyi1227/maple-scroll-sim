@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>楓之谷卷軸模擬器（吸頂版/手機OK）</title>
+<title>楓之谷卷軸模擬器（sticky精簡空白版）</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   *{box-sizing:border-box}
@@ -22,7 +22,7 @@
     top: 0;
     z-index: 1010;
     margin:10px auto 28px auto;
-    padding:8px 12px 70px 12px;
+    padding:8px 12px 28px 12px;    /* <<< 下方padding縮小為28px */
     border:2px solid #4a7;
     border-radius:8px;
     background:#eaffea;
@@ -33,7 +33,6 @@
     text-align:left;
     box-sizing: border-box;
     overflow: visible;
-    /* sticky 關鍵：position、top、z-index，其他照常 */
     box-shadow: 0 4px 20px #0001;
   }
   .summary-scroll-fixed {
@@ -64,11 +63,6 @@
   .summary-scroll-fixed img.selected {
     border-color: #00aaff;
     box-shadow: 0 0 8px #00aaff55;
-  }
-  .summary-bottom-space {
-    display:block;
-    height:18px;
-    width:100%;
   }
   .equip.add-card {
     border-style: dashed;
@@ -122,12 +116,11 @@
     .bar,.bar-num{width:18px;}
     #summary{
       width:99vw; min-width:0; left:0; right:0; margin:0 auto 28px auto;
-      padding-bottom:68px;
+      padding-bottom:32px;      /* 手機也縮小padding-bottom */
       max-width: 100vw;
     }
     .summary-scroll-fixed { right: 7px; bottom: 7px; padding: 3px 7px 2px 7px;}
     .summary-scroll-fixed img { width:27px; height:27px;}
-    .summary-bottom-space{height:12px;}
   }
 </style>
 </head>
@@ -311,7 +304,6 @@ function updateSummary() {
      🎯 <b>成功捲數分布：</b> ${buildStatBar()}
      <hr style="border:0;border-top:1px dashed #aaa; margin:7px 0 4px 0">
      ${passStr}
-     <div class="summary-bottom-space"></div>
      <div class="summary-scroll-fixed" id="summaryScrollBar">
         <img src="scroll60.png" data-rate="60" title="60% 卷軸">
         <img src="scroll10.png" data-rate="10" title="10% 卷軸">
