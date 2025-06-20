@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>楓之谷衝捲模擬器</title>
+<title>楓之谷卷軸模擬器（手機支援）</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   *{box-sizing:border-box}
@@ -28,9 +28,9 @@
     background:#eaffea;
     font-size:14px;
     width:max-content;
-    min-height:230px;   /* 固定高度 */
+    min-height:230px;
     max-height:230px;
-    overflow: hidden;   /* 不顯示滾動條 */
+    overflow: hidden;
     text-align:left;
     transition: height 0.2s;
     box-sizing: border-box;
@@ -80,22 +80,19 @@
     background: #fff9b1; color: #222; border-radius: 4px; padding:2px 8px; font-size:12px; box-shadow:0 0 4px #aaa;
     white-space:nowrap; z-index:2;
   }
-  @media(max-width:600px){
+  @media (max-width:600px) {
     .layout{flex-direction:column;align-items:center}
     .scroll{width:100%;max-width:300px;order:-1}
     .equip-area{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));width:100%}
     h2{font-size:18px}.controls{font-size:12px}
     .bar,.bar-num{width:18px;}
+    #summary {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 3px 8px -3px #8884;
+    }
   }
- @media (max-width: 600px) {
-  #summary {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 3px 8px -3px #8884;
-    /* 可視情況加 padding-bottom 防止被蓋住 */
-  }
-}
 </style>
 </head>
 <body>
