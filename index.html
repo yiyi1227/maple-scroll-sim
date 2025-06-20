@@ -130,12 +130,13 @@
 
 <div class="controls">
   裝備類型：<select id="equipType">
-    <option value="glove">🧤 防具 (5捲)</option>
+    <option value="glove">🧤 手套 (5捲)</option>
     <option value="weapon">⚔️ 武器 (7捲)</option>
   </select>
   ｜裝備數量：<input id="equipCount" type="number" min="1" value="1" style="width:50px">
   <button onclick="generateEquips()">生成裝備</button>
   <button onclick="resetAll()">🔄 重製全部</button>
+  <button onclick="autoFinishAll()">⚡ 一鍵全部衝完</button>
 </div>
 
 <div id="summary"></div>
@@ -195,7 +196,7 @@ function addEquip(type, isDian) {
     <div class="equip-title" id="title-${idx}">
       ${isDian
         ? '🟧 墊卷裝備（0/N）'
-        : (type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ' #' + realNo + `（0/${equipMax[type]}）`
+        : (type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ' #' + realNo + `（0/${equipMax[type]}）`
       }
     </div>
     <div style="text-align:center"><img src="${equipImg[type]}" onerror="this.style.display='none'"></div>
@@ -256,12 +257,60 @@ function applyScroll(equip, rate) {
     const equipsArr = window.equips.filter(e => e.dataset.dian !== "1");
     const cardNo = equipsArr.findIndex(e => e.dataset.idx == idx) + 1;
     document.getElementById('title-' + idx).innerText =
-      (equip.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
+      (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
   }
   const log = document.getElementById('log-' + idx);
   if (used === 1) log.innerHTML = '';
   log.innerHTML += `第 ${used}/${isDian ? 'N' : max} 次 (${rate}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
   log.scrollTop = log.scrollHeight;
+}
+
+// 一鍵全部衝完
+function autoFinishAll() {
+  if (selectedScroll !== 60 && selectedScroll !== 10) {
+    alert("請先選擇要使用的卷軸！");
+    return;
+  }
+  window.equips.forEach(equip => {
+    if (equip.dataset.dian === "1") return; // 跳過墊捲
+    let used = +equip.dataset.used;
+    let succ = +equip.dataset.succ;
+    let max = +equip.dataset.max;
+    let logArr = [];
+    while (used < max) {
+      const ok = Math.random() <= selectedScroll / 100;
+      if (ok) succ++;
+      used++;
+      logArr.push(`第 ${used}/${max} 次 (${selectedScroll}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`);
+    }
+    equip.dataset.used = used;
+    equip.dataset.succ = succ;
+    // 更新log
+    const idx = equip.dataset.idx;
+    document.getElementById('log-' + idx).innerHTML = logArr.join('');
+  });
+  markFailedEquips();
+  // 標題同步刷新
+  window.equips.forEach(equip => {
+    const idx = equip.dataset.idx, isDian = equip.dataset.dian === "1";
+    const used = +equip.dataset.used, succ = +equip.dataset.succ, max = +equip.dataset.max;
+    if (isDian) {
+      document.getElementById('title-' + idx).innerText = `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`;
+      document.getElementById('log-' + idx).innerText = '尚未使用卷軸';
+    } else {
+      const equipsArr = window.equips.filter(e => e.dataset.dian !== "1");
+      const cardNo = equipsArr.findIndex(e => e.dataset.idx == idx) + 1;
+      document.getElementById('title-' + idx).innerText =
+        (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
+    }
+  });
+  // 統計資料刷新
+  // 重新統計
+  total60 = selectedScroll === 60 ? window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.max),0) : total60;
+  total10 = selectedScroll === 10 ? window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.max),0) : total10;
+  totalSucc = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.succ),0);
+  totalUsed = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used),0);
+  updateSummary();
 }
 
 function atLeastOnePerfect(prob) {
@@ -314,7 +363,7 @@ function buildStatBar() {
   return html;
 }
 function updateSummary() {
-  const rate = totalUsed ? (totalSucc / totalUsed * 100).toFixed(1) : '0.0';
+  const rate = totalUsed ? (totalSucc / totalUsed * 100).toFixed(3) : '0.000';
   const prob60Arr = getEachPerfectProb(60);
   const prob10Arr = getEachPerfectProb(10);
   const {cnt: fullCnt, max: maxRoll} = countFullPass();
@@ -322,12 +371,13 @@ function updateSummary() {
   if (fullCnt > 0) {
     passStr = `<span style="color:#D4A000;"><b>已達成全過裝備數量：${fullCnt} 件</b></span>`;
   } else {
-    const atLeastOne60 = (atLeastOnePerfect(prob60Arr) * 100).toFixed(4);
-    const atLeastOne10 = (atLeastOnePerfect(prob10Arr) * 100).toFixed(8);
+    const atLeastOne60 = (atLeastOnePerfect(prob60Arr) * 100).toFixed(3);
+    const atLeastOne10 = (atLeastOnePerfect(prob10Arr) * 100).toFixed(3);
     passStr = `<b>剩餘裝備「至少有一件全過」機率：</b><br>
      ▶️ 60%卷軸全過：${atLeastOne60}%<br>
      ▶️ 10%卷軸全過：${atLeastOne10}%`;
   }
+
   let scrollLabel = "選擇卷軸";
   if (selectedScroll === 60) scrollLabel = "60%捲";
   if (selectedScroll === 10) scrollLabel = "10%捲";
@@ -345,6 +395,7 @@ function updateSummary() {
         <img src="scroll10.png" data-rate="10" title="10% 卷軸">
      </div>`;
 
+  // 卷軸選擇區點選、拖曳事件重新綁定
   document.querySelectorAll('.summary-scroll-fixed img').forEach(img => {
     img.addEventListener('click', () => {
       selectedScroll = parseInt(img.dataset.rate);
@@ -367,7 +418,7 @@ function resetAll() {
       const equipsArr = window.equips.filter(e2 => e2.dataset.dian !== "1");
       const cardNo = equipsArr.findIndex(e2 => e2.dataset.idx == idx) + 1;
       document.getElementById('title-' + idx).innerText =
-        (e.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（0/${max}）`;
+        (e.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${cardNo}（0/${max}）`;
     }
     document.getElementById('log-' + idx).innerText = '尚未使用卷軸';
   });
