@@ -10,9 +10,6 @@
   h2{text-align:center;margin:15px 0 10px}
   .controls{text-align:center;margin-bottom:10px;font-size:14px}
   .layout{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:0 10px}
-  .scroll{width:130px;padding:10px;border:2px solid #ccc;border-radius:8px;background:#fff;text-align:center;position:sticky;top:0;z-index:999}
-  .scroll img{width:80px;cursor:pointer;margin:8px 0;border:2px solid transparent;border-radius:6px}
-  .scroll img.selected{border-color:#00aaff;box-shadow:0 0 5px #00aaff}
   .equip-area{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;flex:1;min-width:200px}
   .equip{padding:10px;border:2px dashed #888;border-radius:8px;background:#fff;transition:background-color .3s; min-height: 150px;}
   .equip.failed{background:#d7dbe0}
@@ -22,19 +19,42 @@
   .equip-log{font-size:11px;line-height:1.3;height:60px;overflow-y:auto;background:#eef3ff;border-radius:4px;padding:4px 6px;white-space:nowrap}
   #summary{
     margin:10px auto;
-    padding:8px 12px;
+    padding:8px 12px 0 12px;
     border:2px solid #4a7;
     border-radius:8px;
     background:#eaffea;
     font-size:14px;
     width:max-content;
-    min-height:230px;   /* 固定高度 */
-    max-height:230px;
-    overflow: hidden;   /* 不顯示滾動條 */
+    min-height:238px;
+    max-height:238px;
+    overflow: hidden;
     text-align:left;
     transition: height 0.2s;
     box-sizing: border-box;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
+  .scroll-inside {
+    background:#fff7cd;
+    border-radius:8px 8px 0 0;
+    text-align:center;
+    margin:-8px -12px 8px -12px;
+    padding:8px 0 6px 0;
+    border-bottom: 1px solid #eedcaa;
+    display: flex;
+    flex-direction:column;
+    align-items: center;
+  }
+  .scroll-title {font-size:19px; font-weight:600; margin-bottom:3px; letter-spacing:2px;}
+  .scroll-imgs {
+    display:flex; justify-content:center; gap:20px; margin-top:2px;
+  }
+  .scroll-imgs img{
+    width:60px; height:60px; cursor:pointer; border:2px solid transparent; border-radius:6px; background:#fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .scroll-imgs img.selected {border-color:#00aaff; box-shadow:0 0 8px #00aaff;}
   .equip.add-card {
     border-style: dashed;
     color: #aaa;
@@ -54,7 +74,7 @@
     align-items: flex-end;
     margin: 5px 0;
     gap: 3px;
-    height: 52px;   /* 條狀圖總高度固定 */
+    height: 52px;
     max-height: 52px;
     overflow: hidden;
   }
@@ -80,12 +100,13 @@
     background: #fff9b1; color: #222; border-radius: 4px; padding:2px 8px; font-size:12px; box-shadow:0 0 4px #aaa;
     white-space:nowrap; z-index:2;
   }
-  @media(max-width:600px){
+  @media(max-width:600px) {
     .layout{flex-direction:column;align-items:center}
-    .scroll{width:100%;max-width:300px;order:-1}
     .equip-area{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));width:100%}
     h2{font-size:18px}.controls{font-size:12px}
     .bar,.bar-num{width:18px;}
+    #summary{width:98vw; min-width:0; left:0; right:0; margin:0 auto;}
+    .scroll-inside{padding-bottom:0;}
   }
 </style>
 </head>
@@ -103,14 +124,20 @@
   <button onclick="resetAll()">🔄 重製全部</button>
 </div>
 
-<div id="summary"></div>
+<div id="summary">
+  <div class="scroll-inside">
+    <div class="scroll-title">
+      <img src="scroll-title.png" style="vertical-align:-7px;width:26px;height:26px;background:none;margin-right:2px;" onerror="this.style.display='none'">卷軸
+    </div>
+    <div class="scroll-imgs">
+      <img src="scroll60.png" data-rate="60" title="60% 卷軸" draggable="true">
+      <img src="scroll10.png" data-rate="10" title="10% 卷軸" draggable="true">
+    </div>
+  </div>
+  <div id="summaryContent"></div>
+</div>
 
 <div class="layout">
-  <div class="scroll">
-    <p>📜 卷軸</p>
-    <img src="scroll60.png" data-rate="60" title="60% 卷軸" draggable="true">
-    <img src="scroll10.png" data-rate="10" title="10% 卷軸" draggable="true">
-  </div>
   <div id="equipArea" class="equip-area"></div>
 </div>
 
@@ -123,13 +150,13 @@ let selectedScroll = null;
 let equipIndex = 1;
 window.equips = [];
 
-document.querySelectorAll('.scroll img').forEach(img => {
-  img.addEventListener('dragstart', e => e.dataTransfer.setData('rate', img.dataset.rate));
+document.querySelectorAll('.scroll-imgs img').forEach(img => {
   img.addEventListener('click', () => {
     selectedScroll = parseInt(img.dataset.rate);
-    document.querySelectorAll('.scroll img').forEach(i => i.classList.remove('selected'));
+    document.querySelectorAll('.scroll-imgs img').forEach(i => i.classList.remove('selected'));
     img.classList.add('selected');
   });
+  img.addEventListener('dragstart', e => e.dataTransfer.setData('rate', img.dataset.rate));
 });
 
 function renderEquipArea() {
@@ -157,13 +184,13 @@ function addEquip(type, isDian) {
     <div class="equip-title" id="title-${idx}">
       ${isDian ? '🟧 墊卷裝備' : (type === 'glove' ? '🧤 手套' : '⚔️ 武器')} #${idx}（0/${isDian ? 'N' : equipMax[type]}）
     </div>
-    <div style="text-align:center"><img src="${equipImg[type]}"></div>
+    <div style="text-align:center"><img src="${equipImg[type]}" onerror="this.style.display='none'"></div>
     <div class="equip-log" id="log-${idx}">尚未使用卷軸</div>
   `;
   div.ondragover = e => e.preventDefault();
   div.ondrop = e => {
     e.preventDefault();
-    const rate = parseInt(e.dataTransfer.getData('rate'));
+    const rate = selectedScroll;
     applyScroll(div, rate);
   };
   div.addEventListener('pointerup', () => {
@@ -177,8 +204,8 @@ function generateEquips() {
   window.equips = [];
   total60 = total10 = totalSucc = totalUsed = 0;
   selectedScroll = null;
+  document.querySelectorAll('.scroll-imgs img').forEach(i => i.classList.remove('selected'));
   equipIndex = 1;
-  document.querySelectorAll('.scroll img').forEach(i => i.classList.remove('selected'));
   updateSummary();
   addEquip('glove', true);
   const type = document.getElementById('equipType').value;
@@ -214,8 +241,6 @@ function applyScroll(equip, rate) {
   log.innerHTML += `第 ${used}/${isDian ? 'N' : max} 次 (${rate}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
   log.scrollTop = log.scrollHeight;
 }
-
-//「至少有一件全過」機率（不含墊卷裝備）
 function atLeastOnePerfect(prob) {
   let q = 1;
   for (let p of prob) q *= (1 - p);
@@ -232,7 +257,6 @@ function getEachPerfectProb(rate) {
   }
   return arr;
 }
-// 計算已經全過的件數
 function countFullPass() {
   let cnt = 0, max = 0;
   window.equips.forEach(e => {
@@ -243,7 +267,6 @@ function countFullPass() {
   });
   return {cnt, max};
 }
-// 捲成功統計條狀圖（固定最大高度、超出自動壓縮）
 function buildStatBar() {
   let stat = {}, max = 0, maxValue = 0;
   window.equips.forEach(e => {
@@ -254,12 +277,12 @@ function buildStatBar() {
     if (stat[s] > maxValue) maxValue = stat[s];
   });
   if (max === 0) return "（尚無資料）";
-  const BAR_MAX_HEIGHT = 42;  // px
+  const BAR_MAX_HEIGHT = 42;
   let html = '<div class="bar-row">';
   for (let i = 0; i <= max; i++) {
     let v = stat[i] || 0;
     let h = maxValue > 0 ? Math.round((v / maxValue) * BAR_MAX_HEIGHT) : 8;
-    if (v > 0 && h < 16) h = 16; // 最小高度
+    if (v > 0 && h < 16) h = 16;
     html += `<div class="bar${i===max?' full':''}" style="height:${h}px" data-tip="${i}捲成功：${v}件">${v > 0 ? v : ''}</div>`;
   }
   html += '</div><div class="bar-row" style="height:auto">';
@@ -271,7 +294,6 @@ function updateSummary() {
   const rate = totalUsed ? (totalSucc / totalUsed * 100).toFixed(1) : '0.0';
   const prob60Arr = getEachPerfectProb(60);
   const prob10Arr = getEachPerfectProb(10);
-  // 有全過的直接顯示
   const {cnt: fullCnt, max: maxRoll} = countFullPass();
   let passStr = '';
   if (fullCnt > 0) {
@@ -283,7 +305,7 @@ function updateSummary() {
      ▶️ 60%卷軸全過：${atLeastOne60}%<br>
      ▶️ 10%卷軸全過：${atLeastOne10}%`;
   }
-  document.getElementById('summary').innerHTML =
+  document.getElementById('summaryContent').innerHTML =
     `60% 卷軸：${total60} 張｜10% 卷軸：${total10} 張｜成功：${totalSucc} / ${totalUsed}（${rate} %）<br>
      🎯 <b>成功捲數分布：</b> ${buildStatBar()}
      <hr style="border:0;border-top:1px dashed #aaa">
@@ -299,7 +321,7 @@ function resetAll() {
   });
   total60 = total10 = totalSucc = totalUsed = 0;
   selectedScroll = null;
-  document.querySelectorAll('.scroll img').forEach(i => i.classList.remove('selected'));
+  document.querySelectorAll('.scroll-imgs img').forEach(i => i.classList.remove('selected'));
   updateSummary();
 }
 generateEquips();
