@@ -189,9 +189,13 @@ function addEquip(type, isDian) {
   div.dataset.type = type;
   div.dataset.dian = isDian ? "1" : "";
   div.innerHTML = `
-    <div class="equip-title" id="title-${idx}">
-      ${isDian ? '🟧 墊卷裝備' : (type === 'glove' ? '🧤 手套' : '⚔️ 武器')} #${idx}（0/${isDian ? 'N' : equipMax[type]}）
-    </div>
+    div.innerHTML = `
+  <div class="equip-title" id="title-${idx}">
+    ${isDian
+      ? '🟧 墊卷裝備（0/N）'
+      : (type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ' #' + idx + `（0/${equipMax[type]}）`
+    }
+  </div>
     <div style="text-align:center"><img src="${equipImg[type]}" onerror="this.style.display='none'"></div>
     <div class="equip-log" id="log-${idx}">尚未使用卷軸</div>
   `;
@@ -244,7 +248,9 @@ function applyScroll(equip, rate) {
   markFailedEquips();   // 馬上標記失敗
   updateSummary();
   document.getElementById('title-' + idx).innerText =
-    (isDian ? '🟧 墊卷裝備' : (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器')) + ` #${idx}（${isDian ? (succ ? succ : 'N') + '/N' : succ + '/' + max}）`;
+  isDian
+    ? `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`
+    : (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${idx}（${succ}/${max}）`;
   const log = document.getElementById('log-' + idx);
   if (used === 1) log.innerHTML = '';
   log.innerHTML += `第 ${used}/${isDian ? 'N' : max} 次 (${rate}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
