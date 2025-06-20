@@ -185,11 +185,13 @@ function addEquip(type, isDian) {
   div.dataset.max = isDian ? 999 : equipMax[type];
   div.dataset.used = 0;
   div.dataset.succ = 0;
+  div.dataset.used60 = 0;
+  div.dataset.used10 = 0;
   div.dataset.idx = idx;
   div.dataset.type = type;
   div.dataset.dian = isDian ? "1" : "";
 
-  // 計算目前已存在的非墊捲裝備數(產生新裝備前)
+  // 計算目前已存在的非墊捲裝備數
   const realNo = isDian ? '' : (window.equips.filter(e => e.dataset.dian !== "1").length + 1);
 
   div.innerHTML = `
@@ -245,7 +247,11 @@ function applyScroll(equip, rate) {
   if (ok) succ++;
   used++;
   equip.dataset.used = used; equip.dataset.succ = succ;
-  if (rate === 60) total60++; else total10++;
+  if (rate === 60) {
+    equip.dataset.used60 = +equip.dataset.used60 + 1;
+  } else if (rate === 10) {
+    equip.dataset.used10 = +equip.dataset.used10 + 1;
+  }
   if (ok) totalSucc++;
   totalUsed++;
   markFailedEquips();
@@ -257,7 +263,7 @@ function applyScroll(equip, rate) {
     const equipsArr = window.equips.filter(e => e.dataset.dian !== "1");
     const cardNo = equipsArr.findIndex(e => e.dataset.idx == idx) + 1;
     document.getElementById('title-' + idx).innerText =
-      (equip.dataset.type === 'glove' ? '🧤防具' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
+      (equip.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
   }
   const log = document.getElementById('log-' + idx);
   if (used === 1) log.innerHTML = '';
@@ -276,18 +282,23 @@ function autoFinishAll() {
     let used = +equip.dataset.used;
     let succ = +equip.dataset.succ;
     let max = +equip.dataset.max;
-    let logArr = [];
+    const idx = equip.dataset.idx;
+    const log = document.getElementById('log-' + idx);
+    if (used === 0) log.innerHTML = '';
+    let countToAdd = max - used;
     while (used < max) {
       const ok = Math.random() <= selectedScroll / 100;
       if (ok) succ++;
       used++;
-      logArr.push(`第 ${used}/${max} 次 (${selectedScroll}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`);
+      log.innerHTML += `第 ${used}/${max} 次 (${selectedScroll}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
     }
     equip.dataset.used = used;
     equip.dataset.succ = succ;
-    // 更新log
-    const idx = equip.dataset.idx;
-    document.getElementById('log-' + idx).innerHTML = logArr.join('');
+    if (selectedScroll === 60) {
+      equip.dataset.used60 = +equip.dataset.used60 + countToAdd;
+    } else if (selectedScroll === 10) {
+      equip.dataset.used10 = +equip.dataset.used10 + countToAdd;
+    }
   });
   markFailedEquips();
   // 標題同步刷新
@@ -305,10 +316,6 @@ function autoFinishAll() {
     }
   });
   // 統計資料刷新
-  total60 = selectedScroll === 60 ? window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.max),0) : total60;
-  total10 = selectedScroll === 10 ? window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.max),0) : total10;
-  totalSucc = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.succ),0);
-  totalUsed = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used),0);
   updateSummary();
 }
 
@@ -329,6 +336,11 @@ function autoFinishAllOnce() {
       used++;
       equip.dataset.used = used;
       equip.dataset.succ = succ;
+      if (selectedScroll === 60) {
+        equip.dataset.used60 = +equip.dataset.used60 + 1;
+      } else if (selectedScroll === 10) {
+        equip.dataset.used10 = +equip.dataset.used10 + 1;
+      }
       // 更新log
       const idx = equip.dataset.idx;
       const log = document.getElementById('log-' + idx);
@@ -351,10 +363,6 @@ function autoFinishAllOnce() {
     }
   });
   // 統計資料刷新
-  total60 = selectedScroll === 60 ? window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used),0) : total60;
-  total10 = selectedScroll === 10 ? window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used),0) : total10;
-  totalSucc = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.succ),0);
-  totalUsed = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used),0);
   updateSummary();
 }
 
@@ -408,6 +416,12 @@ function buildStatBar() {
   return html;
 }
 function updateSummary() {
+  // 用每件裝備的 used60/used10 做加總
+  total60 = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used60),0);
+  total10 = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used10),0);
+  totalSucc = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.succ),0);
+  totalUsed = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used),0);
+
   const rate = totalUsed ? (totalSucc / totalUsed * 100).toFixed(3) : '0.000';
   const prob60Arr = getEachPerfectProb(60);
   const prob10Arr = getEachPerfectProb(10);
@@ -457,6 +471,7 @@ function resetAll() {
   window.equips.forEach(e => {
     const max = +e.dataset.max, idx = e.dataset.idx, isDian = e.dataset.dian === "1";
     e.dataset.used = 0; e.dataset.succ = 0; e.classList.remove('failed');
+    e.dataset.used60 = 0; e.dataset.used10 = 0;
     if(isDian){
       document.getElementById('title-' + idx).innerText = '🟧 墊卷裝備（N/N）';
     } else {
