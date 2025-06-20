@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>楓之谷卷軸模擬器（summary無初始空白）</title>
+<title>楓之谷衝捲模擬器</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   *{box-sizing:border-box}
@@ -33,7 +33,6 @@
     box-sizing: border-box;
     overflow: visible;
     box-shadow: 0 4px 20px #0001;
-    /* min-height 這行已刪除，初始不會有大空白 */
   }
   .summary-scroll-fixed {
     position: absolute;
@@ -126,7 +125,7 @@
 </head>
 <body>
 
-<h2>🍁 楓之谷卷軸模擬器</h2>
+<h2>🍁 楓之谷衝捲模擬器</h2>
 
 <div class="controls">
   裝備類型：<select id="equipType">
@@ -152,6 +151,20 @@ let total60 = 0, total10 = 0, totalSucc = 0, totalUsed = 0;
 let selectedScroll = null;
 let equipIndex = 1;
 window.equips = [];
+
+// 新增：每次操作都馬上標記「已失敗」的裝備
+function markFailedEquips() {
+  window.equips.forEach(e => {
+    if (e.dataset.dian === "1") return;
+    const used = +e.dataset.used, succ = +e.dataset.succ, max = +e.dataset.max;
+    // 只要有失敗紀錄（即 used > succ，且還沒滿 max）
+    if (used > succ && used > 0 && succ < max) {
+      e.classList.add('failed');
+    } else {
+      e.classList.remove('failed');
+    }
+  });
+}
 
 function renderEquipArea() {
   const area = document.getElementById('equipArea');
@@ -199,15 +212,17 @@ function generateEquips() {
   total60 = total10 = totalSucc = totalUsed = 0;
   selectedScroll = null;
   equipIndex = 1;
-  updateSummary();
   addEquip('glove', true);
   const type = document.getElementById('equipType').value;
   const cnt = parseInt(document.getElementById('equipCount').value);
   for (let i = 1; i <= cnt; i++) addEquip(type, false);
+  markFailedEquips();
+  updateSummary();
 }
 
 function addSingleEquip() {
   addEquip(document.getElementById('equipType').value, false);
+  markFailedEquips();
   updateSummary();
 }
 
@@ -225,8 +240,8 @@ function applyScroll(equip, rate) {
   if (rate === 60) total60++; else total10++;
   if (ok) totalSucc++;
   totalUsed++;
+  markFailedEquips();   // 馬上標記失敗
   updateSummary();
-  if (!isDian && used > succ) equip.classList.add('failed');
   document.getElementById('title-' + idx).innerText =
     (isDian ? '🟧 墊卷裝備' : (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器')) + ` #${idx}（${isDian ? (succ ? succ : 'N') + '/N' : succ + '/' + max}）`;
   const log = document.getElementById('log-' + idx);
@@ -330,6 +345,7 @@ function resetAll() {
   });
   total60 = total10 = totalSucc = totalUsed = 0;
   selectedScroll = null;
+  markFailedEquips();
   updateSummary();
 }
 
