@@ -18,35 +18,34 @@
   .equip-title{font-weight:bold;font-size:13px;margin-bottom:4px;min-height:24px;text-align:center}
   .equip-log{font-size:11px;line-height:1.3;height:60px;overflow-y:auto;background:#eef3ff;border-radius:4px;padding:4px 6px;white-space:nowrap}
   #summary{
-    margin:10px auto 24px auto;
-    padding:8px 12px 42px 12px; /* 下方留空 */
+    margin:10px auto 28px auto; /* 下方間距加大 */
+    padding:8px 12px 70px 12px; /* 多留空間給浮動卷軸 */
     border:2px solid #4a7;
     border-radius:8px;
     background:#eaffea;
     font-size:14px;
     width:max-content;
     min-height:238px;
-    max-height:238px;
-    overflow: hidden;
+    max-width:98vw;
     text-align:left;
-    transition: height 0.2s;
     box-sizing: border-box;
-    position: relative;  /* 讓卷軸可以定位在右下 */
+    position: relative; /* 讓卷軸能絕對定位於區域右下 */
+    overflow: visible;
   }
   .summary-scroll-fixed {
     position: absolute;
-    right: 17px;
-    bottom: 13px;
+    right: 14px;
+    bottom: 14px;
     display: flex;
     gap: 13px;
-    z-index: 2;
+    z-index: 3;
     background: #fffbe9e3;
     border-radius: 10px;
     box-shadow: 0 2px 8px -3px #b6a25c33;
-    padding: 5px 10px 3px 10px;
+    padding: 5px 12px 4px 12px;
     border: 1.5px solid #e6cf85;
     align-items: center;
-    min-width: 70px;
+    min-width: 68px;
   }
   .summary-scroll-fixed img {
     width: 34px; height: 34px;
@@ -61,6 +60,11 @@
   .summary-scroll-fixed img.selected {
     border-color: #00aaff;
     box-shadow: 0 0 8px #00aaff55;
+  }
+  .summary-bottom-space {
+    display:block;
+    height:18px;
+    width:100%;
   }
   .equip.add-card {
     border-style: dashed;
@@ -112,9 +116,14 @@
     .equip-area{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));width:100%}
     h2{font-size:18px}.controls{font-size:12px}
     .bar,.bar-num{width:18px;}
-    #summary{width:98vw; min-width:0; left:0; right:0; margin:0 auto; padding-bottom:44px;}
-    .summary-scroll-fixed { right: 13px; bottom: 8px; padding: 3px 7px 2px 7px;}
+    #summary{
+      width:99vw; min-width:0; left:0; right:0; margin:0 auto 28px auto;
+      padding-bottom:68px;
+      max-width: 100vw;
+    }
+    .summary-scroll-fixed { right: 7px; bottom: 7px; padding: 3px 7px 2px 7px;}
     .summary-scroll-fixed img { width:27px; height:27px;}
+    .summary-bottom-space{height:12px;}
   }
 </style>
 </head>
@@ -298,6 +307,7 @@ function updateSummary() {
      🎯 <b>成功捲數分布：</b> ${buildStatBar()}
      <hr style="border:0;border-top:1px dashed #aaa; margin:7px 0 4px 0">
      ${passStr}
+     <div class="summary-bottom-space"></div>
      <div class="summary-scroll-fixed" id="summaryScrollBar">
         <img src="scroll60.png" data-rate="60" title="60% 卷軸">
         <img src="scroll10.png" data-rate="10" title="10% 卷軸">
