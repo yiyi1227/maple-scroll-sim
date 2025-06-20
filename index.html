@@ -130,7 +130,7 @@
 
 <div class="controls">
   裝備類型：<select id="equipType">
-    <option value="glove">🧤 手套 (5捲)</option>
+    <option value="glove">🧤 防具 (5捲)</option>
     <option value="weapon">⚔️ 武器 (7捲)</option>
   </select>
   ｜裝備數量：<input id="equipCount" type="number" min="1" value="1" style="width:50px">
@@ -195,7 +195,7 @@ function addEquip(type, isDian) {
     <div class="equip-title" id="title-${idx}">
       ${isDian
         ? '🟧 墊卷裝備（0/N）'
-        : (type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ' #' + realNo + `（0/${equipMax[type]}）`
+        : (type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ' #' + realNo + `（0/${equipMax[type]}）`
       }
     </div>
     <div style="text-align:center"><img src="${equipImg[type]}" onerror="this.style.display='none'"></div>
@@ -256,7 +256,7 @@ function applyScroll(equip, rate) {
     const equipsArr = window.equips.filter(e => e.dataset.dian !== "1");
     const cardNo = equipsArr.findIndex(e => e.dataset.idx == idx) + 1;
     document.getElementById('title-' + idx).innerText =
-      (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
+      (equip.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
   }
   const log = document.getElementById('log-' + idx);
   if (used === 1) log.innerHTML = '';
@@ -367,7 +367,7 @@ function resetAll() {
       const equipsArr = window.equips.filter(e2 => e2.dataset.dian !== "1");
       const cardNo = equipsArr.findIndex(e2 => e2.dataset.idx == idx) + 1;
       document.getElementById('title-' + idx).innerText =
-        (e.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${cardNo}（0/${max}）`;
+        (e.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（0/${max}）`;
     }
     document.getElementById('log-' + idx).innerText = '尚未使用卷軸';
   });
