@@ -87,6 +87,15 @@
     h2{font-size:18px}.controls{font-size:12px}
     .bar,.bar-num{width:18px;}
   }
+ @media (max-width: 600px) {
+  #summary {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 3px 8px -3px #8884;
+    /* 可視情況加 padding-bottom 防止被蓋住 */
+  }
+}
 </style>
 </head>
 <body>
