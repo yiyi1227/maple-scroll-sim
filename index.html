@@ -5,124 +5,124 @@
   <title>楓之谷衝捲模擬器</title>
   <meta property="og:title" content="楓之谷衝捲模擬器">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  *{box-sizing:border-box}
-  body{font-family:Arial, sans-serif;background:#f0f6ff;margin:0;padding:0;user-select:none}
-  h2{text-align:center;margin:15px 0 10px}
-  .controls{text-align:center;margin-bottom:10px;font-size:14px}
-  .layout{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:0 10px}
-  .equip-area{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;flex:1;min-width:200px}
-  .equip{padding:10px;border:2px dashed #888;border-radius:8px;background:#fff;transition:background-color .3s; min-height: 150px;}
-  .equip.failed{background:#d7dbe0}
-  .equip.dian{background:#ffb94f;border-style:solid;}
-  .equip img{width:80px}
-  .equip-title{font-weight:bold;font-size:13px;margin-bottom:4px;min-height:24px;text-align:center}
-  .equip-log{font-size:11px;line-height:1.3;height:60px;overflow-y:auto;background:#eef3ff;border-radius:4px;padding:4px 6px;white-space:nowrap}
-  #summary{
-    position: sticky;
-    top: 0;
-    z-index: 1010;
-    margin:10px auto 28px auto;
-    padding:8px 12px 28px 12px;
-    border:2px solid #4a7;
-    border-radius:8px;
-    background:#eaffea;
-    font-size:14px;
-    width:max-content;
-    max-width:98vw;
-    text-align:left;
-    box-sizing: border-box;
-    overflow: visible;
-    box-shadow: 0 4px 20px #0001;
-  }
-  .summary-scroll-fixed {
-    position: absolute;
-    right: 14px;
-    bottom: 14px;
-    display: flex;
-    gap: 13px;
-    z-index: 3;
-    background: #fffbe9e3;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px -3px #b6a25c33;
-    padding: 5px 12px 4px 12px;
-    border: 1.5px solid #e6cf85;
-    align-items: center;
-    min-width: 68px;
-  }
-  .summary-scroll-fixed img {
-    width: 34px; height: 34px;
-    border: 2px solid transparent;
-    border-radius: 7px;
-    background: #fff;
-    cursor: pointer;
-    box-sizing: border-box;
-    transition: border-color 0.18s, box-shadow 0.18s;
-    display: inline-block;
-  }
-  .summary-scroll-fixed img.selected {
-    border-color: #00aaff;
-    box-shadow: 0 0 8px #00aaff55;
-  }
-  .equip.add-card {
-    border-style: dashed;
-    color: #aaa;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 38px;
-    cursor: pointer;
-    transition: background .2s;
-    min-height: 150px;
-  }
-  .equip.add-card:hover { background: #f4eec0; }
-  .equip.add-card img { width: 48px; margin-bottom: 6px; }
-  .bar-row {
-    display: flex;
-    align-items: flex-end;
-    margin: 5px 0;
-    gap: 3px;
-    height: 52px;
-    max-height: 52px;
-    overflow: hidden;
-  }
-  .bar {
-    width: 22px;
-    background: #88bfff;
-    border-radius: 4px 4px 0 0;
-    text-align: center;
-    color: #333;
-    font-size: 13px;
-    position: relative;
-    border:1px solid #eee;
-    transition:height 0.15s;
-    display: flex; align-items: flex-end; justify-content:center;
-  }
-  .bar.full {background:#FFD447;}
-  .bar-num {
-    text-align:center; font-size:12px; color:#666; margin-top:2px; width:22px;
-  }
-  .bar:hover:after {
-    content: attr(data-tip);
-    position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
-    background: #fff9b1; color: #222; border-radius: 4px; padding:2px 8px; font-size:12px; box-shadow:0 0 4px #aaa;
-    white-space:nowrap; z-index:2;
-  }
-  @media (max-width:600px) {
-    .layout{flex-direction:column;align-items:center}
-    .equip-area{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));width:100%}
-    h2{font-size:18px}.controls{font-size:12px}
-    .bar,.bar-num{width:18px;}
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:Arial, sans-serif;background:#f0f6ff;margin:0;padding:0;user-select:none}
+    h2{text-align:center;margin:15px 0 10px}
+    .controls{text-align:center;margin-bottom:10px;font-size:14px}
+    .layout{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;padding:0 10px}
+    .equip-area{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;flex:1;min-width:200px}
+    .equip{padding:10px;border:2px dashed #888;border-radius:8px;background:#fff;transition:background-color .3s; min-height: 150px;}
+    .equip.failed{background:#d7dbe0}
+    .equip.dian{background:#ffb94f;border-style:solid;}
+    .equip img{width:80px}
+    .equip-title{font-weight:bold;font-size:13px;margin-bottom:4px;min-height:24px;text-align:center}
+    .equip-log{font-size:11px;line-height:1.3;height:60px;overflow-y:auto;background:#eef3ff;border-radius:4px;padding:4px 6px;white-space:nowrap}
     #summary{
-      width:99vw; min-width:0; left:0; right:0; margin:0 auto 28px auto;
-      padding-bottom:32px;
-      max-width: 100vw;
+      position: sticky;
+      top: 0;
+      z-index: 1010;
+      margin:10px auto 28px auto;
+      padding:8px 12px 28px 12px;
+      border:2px solid #4a7;
+      border-radius:8px;
+      background:#eaffea;
+      font-size:14px;
+      width:max-content;
+      max-width:98vw;
+      text-align:left;
+      box-sizing: border-box;
+      overflow: visible;
+      box-shadow: 0 4px 20px #0001;
     }
-    .summary-scroll-fixed { right: 7px; bottom: 7px; padding: 3px 7px 2px 7px;}
-    .summary-scroll-fixed img { width:27px; height:27px;}
-  }
-</style>
+    .summary-scroll-fixed {
+      position: absolute;
+      right: 14px;
+      bottom: 14px;
+      display: flex;
+      gap: 13px;
+      z-index: 3;
+      background: #fffbe9e3;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px -3px #b6a25c33;
+      padding: 5px 12px 4px 12px;
+      border: 1.5px solid #e6cf85;
+      align-items: center;
+      min-width: 68px;
+    }
+    .summary-scroll-fixed img {
+      width: 34px; height: 34px;
+      border: 2px solid transparent;
+      border-radius: 7px;
+      background: #fff;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      display: inline-block;
+    }
+    .summary-scroll-fixed img.selected {
+      border-color: #00aaff;
+      box-shadow: 0 0 8px #00aaff55;
+    }
+    .equip.add-card {
+      border-style: dashed;
+      color: #aaa;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 38px;
+      cursor: pointer;
+      transition: background .2s;
+      min-height: 150px;
+    }
+    .equip.add-card:hover { background: #f4eec0; }
+    .equip.add-card img { width: 48px; margin-bottom: 6px; }
+    .bar-row {
+      display: flex;
+      align-items: flex-end;
+      margin: 5px 0;
+      gap: 3px;
+      height: 52px;
+      max-height: 52px;
+      overflow: hidden;
+    }
+    .bar {
+      width: 22px;
+      background: #88bfff;
+      border-radius: 4px 4px 0 0;
+      text-align: center;
+      color: #333;
+      font-size: 13px;
+      position: relative;
+      border:1px solid #eee;
+      transition:height 0.15s;
+      display: flex; align-items: flex-end; justify-content:center;
+    }
+    .bar.full {background:#FFD447;}
+    .bar-num {
+      text-align:center; font-size:12px; color:#666; margin-top:2px; width:22px;
+    }
+    .bar:hover:after {
+      content: attr(data-tip);
+      position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+      background: #fff9b1; color: #222; border-radius: 4px; padding:2px 8px; font-size:12px; box-shadow:0 0 4px #aaa;
+      white-space:nowrap; z-index:2;
+    }
+    @media (max-width:600px) {
+      .layout{flex-direction:column;align-items:center}
+      .equip-area{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));width:100%}
+      h2{font-size:18px}.controls{font-size:12px}
+      .bar,.bar-num{width:18px;}
+      #summary{
+        width:99vw; min-width:0; left:0; right:0; margin:0 auto 28px auto;
+        padding-bottom:32px;
+        max-width: 100vw;
+      }
+      .summary-scroll-fixed { right: 7px; bottom: 7px; padding: 3px 7px 2px 7px;}
+      .summary-scroll-fixed img { width:27px; height:27px;}
+    }
+  </style>
 </head>
 <body>
 
@@ -158,7 +158,6 @@ function markFailedEquips() {
   window.equips.forEach(e => {
     if (e.dataset.dian === "1") return;
     const used = +e.dataset.used, succ = +e.dataset.succ, max = +e.dataset.max;
-    // 只要有失敗紀錄（即 used > succ，且還沒滿 max）
     if (used > succ && used > 0 && succ < max) {
       e.classList.add('failed');
     } else {
@@ -188,14 +187,14 @@ function addEquip(type, isDian) {
   div.dataset.idx = idx;
   div.dataset.type = type;
   div.dataset.dian = isDian ? "1" : "";
+  // ====== 這裡是標題，不顯示墊捲的 #編號 ======
   div.innerHTML = `
-    div.innerHTML = `
-  <div class="equip-title" id="title-${idx}">
-    ${isDian
-      ? '🟧 墊卷裝備（0/N）'
-      : (type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ' #' + idx + `（0/${equipMax[type]}）`
-    }
-  </div>
+    <div class="equip-title" id="title-${idx}">
+      ${isDian
+        ? '🟧 墊卷裝備（0/N）'
+        : (type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ' #' + idx + `（0/${equipMax[type]}）`
+      }
+    </div>
     <div style="text-align:center"><img src="${equipImg[type]}" onerror="this.style.display='none'"></div>
     <div class="equip-log" id="log-${idx}">尚未使用卷軸</div>
   `;
@@ -245,17 +244,19 @@ function applyScroll(equip, rate) {
   if (rate === 60) total60++; else total10++;
   if (ok) totalSucc++;
   totalUsed++;
-  markFailedEquips();   // 馬上標記失敗
+  markFailedEquips();
   updateSummary();
+  // ======= 這裡是標題，不顯示墊捲的 #編號 =======
   document.getElementById('title-' + idx).innerText =
-  isDian
-    ? `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`
-    : (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${idx}（${succ}/${max}）`;
+    isDian
+      ? `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`
+      : (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${idx}（${succ}/${max}）`;
   const log = document.getElementById('log-' + idx);
   if (used === 1) log.innerHTML = '';
   log.innerHTML += `第 ${used}/${isDian ? 'N' : max} 次 (${rate}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
   log.scrollTop = log.scrollHeight;
 }
+
 function atLeastOnePerfect(prob) {
   let q = 1;
   for (let p of prob) q *= (1 - p);
@@ -320,8 +321,6 @@ function updateSummary() {
      ▶️ 60%卷軸全過：${atLeastOne60}%<br>
      ▶️ 10%卷軸全過：${atLeastOne10}%`;
   }
-
-  // 動態提示文字
   let scrollLabel = "選擇卷軸";
   if (selectedScroll === 60) scrollLabel = "60%捲";
   if (selectedScroll === 10) scrollLabel = "10%捲";
@@ -339,13 +338,12 @@ function updateSummary() {
         <img src="scroll10.png" data-rate="10" title="10% 卷軸">
      </div>`;
 
-  // 卷軸選擇區點選、拖曳事件重新綁定
   document.querySelectorAll('.summary-scroll-fixed img').forEach(img => {
     img.addEventListener('click', () => {
       selectedScroll = parseInt(img.dataset.rate);
       document.querySelectorAll('.summary-scroll-fixed img').forEach(i => i.classList.remove('selected'));
       img.classList.add('selected');
-      updateSummary(); // 讓標題能及時刷新
+      updateSummary();
     });
     img.addEventListener('dragstart', e => e.dataTransfer.setData('rate', img.dataset.rate));
     if (selectedScroll == img.dataset.rate) img.classList.add('selected');
@@ -356,8 +354,11 @@ function resetAll() {
   window.equips.forEach(e => {
     const max = +e.dataset.max, idx = e.dataset.idx, isDian = e.dataset.dian === "1";
     e.dataset.used = 0; e.dataset.succ = 0; e.classList.remove('failed');
+    // ======= 這裡也是不顯示墊捲的 #編號 =======
     document.getElementById('title-' + idx).innerText =
-      (isDian ? '🟧 墊卷裝備' : (e.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器')) + ` #${idx}（${isDian ? 'N/N' : '0/' + max}）`;
+      isDian
+        ? '🟧 墊卷裝備（N/N）'
+        : (e.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${idx}（0/${max}）`;
     document.getElementById('log-' + idx).innerText = '尚未使用卷軸';
   });
   total60 = total10 = totalSucc = totalUsed = 0;
