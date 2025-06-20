@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>楓之谷卷軸模擬器（手機支援）</title>
+<title>楓之谷卷軸模擬器（吸頂版/手機OK）</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   *{box-sizing:border-box}
@@ -18,8 +18,11 @@
   .equip-title{font-weight:bold;font-size:13px;margin-bottom:4px;min-height:24px;text-align:center}
   .equip-log{font-size:11px;line-height:1.3;height:60px;overflow-y:auto;background:#eef3ff;border-radius:4px;padding:4px 6px;white-space:nowrap}
   #summary{
-    margin:10px auto 28px auto; /* 下方間距加大 */
-    padding:8px 12px 70px 12px; /* 多留空間給浮動卷軸 */
+    position: sticky;
+    top: 0;
+    z-index: 1010;
+    margin:10px auto 28px auto;
+    padding:8px 12px 70px 12px;
     border:2px solid #4a7;
     border-radius:8px;
     background:#eaffea;
@@ -29,8 +32,9 @@
     max-width:98vw;
     text-align:left;
     box-sizing: border-box;
-    position: relative; /* 讓卷軸能絕對定位於區域右下 */
     overflow: visible;
+    /* sticky 關鍵：position、top、z-index，其他照常 */
+    box-shadow: 0 4px 20px #0001;
   }
   .summary-scroll-fixed {
     position: absolute;
