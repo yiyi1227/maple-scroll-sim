@@ -153,7 +153,7 @@ let selectedScroll = null;
 let equipIndex = 1;
 window.equips = [];
 
-// 新增：每次操作都馬上標記「已失敗」的裝備
+// 標記失敗
 function markFailedEquips() {
   window.equips.forEach(e => {
     if (e.dataset.dian === "1") return;
@@ -187,12 +187,15 @@ function addEquip(type, isDian) {
   div.dataset.idx = idx;
   div.dataset.type = type;
   div.dataset.dian = isDian ? "1" : "";
-  // ====== 這裡是標題，不顯示墊捲的 #編號 ======
+
+  // 計算目前已存在的非墊捲裝備數(產生新裝備前)
+  const realNo = isDian ? '' : (window.equips.filter(e => e.dataset.dian !== "1").length + 1);
+
   div.innerHTML = `
     <div class="equip-title" id="title-${idx}">
       ${isDian
         ? '🟧 墊卷裝備（0/N）'
-        : (type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ' #' + idx + `（0/${equipMax[type]}）`
+        : (type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ' #' + realNo + `（0/${equipMax[type]}）`
       }
     </div>
     <div style="text-align:center"><img src="${equipImg[type]}" onerror="this.style.display='none'"></div>
@@ -246,11 +249,15 @@ function applyScroll(equip, rate) {
   totalUsed++;
   markFailedEquips();
   updateSummary();
-  // ======= 這裡是標題，不顯示墊捲的 #編號 =======
-  document.getElementById('title-' + idx).innerText =
-    isDian
-      ? `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`
-      : (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${idx}（${succ}/${max}）`;
+
+  if(isDian){
+    document.getElementById('title-' + idx).innerText = `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`;
+  } else {
+    const equipsArr = window.equips.filter(e => e.dataset.dian !== "1");
+    const cardNo = equipsArr.findIndex(e => e.dataset.idx == idx) + 1;
+    document.getElementById('title-' + idx).innerText =
+      (equip.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
+  }
   const log = document.getElementById('log-' + idx);
   if (used === 1) log.innerHTML = '';
   log.innerHTML += `第 ${used}/${isDian ? 'N' : max} 次 (${rate}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
@@ -354,11 +361,14 @@ function resetAll() {
   window.equips.forEach(e => {
     const max = +e.dataset.max, idx = e.dataset.idx, isDian = e.dataset.dian === "1";
     e.dataset.used = 0; e.dataset.succ = 0; e.classList.remove('failed');
-    // ======= 這裡也是不顯示墊捲的 #編號 =======
-    document.getElementById('title-' + idx).innerText =
-      isDian
-        ? '🟧 墊卷裝備（N/N）'
-        : (e.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${idx}（0/${max}）`;
+    if(isDian){
+      document.getElementById('title-' + idx).innerText = '🟧 墊卷裝備（N/N）';
+    } else {
+      const equipsArr = window.equips.filter(e2 => e2.dataset.dian !== "1");
+      const cardNo = equipsArr.findIndex(e2 => e2.dataset.idx == idx) + 1;
+      document.getElementById('title-' + idx).innerText =
+        (e.dataset.type === 'glove' ? '🧤 手套' : '⚔️ 武器') + ` #${cardNo}（0/${max}）`;
+    }
     document.getElementById('log-' + idx).innerText = '尚未使用卷軸';
   });
   total60 = total10 = totalSucc = totalUsed = 0;
