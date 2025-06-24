@@ -14,6 +14,8 @@
     .equip{padding:10px;border:2px dashed #888;border-radius:8px;background:#fff;transition:background-color .3s; min-height: 150px;}
     .equip.failed{background:#d7dbe0}
     .equip.dian{background:#ffb94f;border-style:solid;}
+    .equip.disappear{background:#222;color:#fff;opacity:0.92;}
+    .equip.disappear .equip-log { color: #111; background: #eee; }
     .equip img{width:80px}
     .equip-title{font-weight:bold;font-size:13px;margin-bottom:4px;min-height:24px;text-align:center}
     .equip-log{font-size:11px;line-height:1.3;height:60px;overflow-y:auto;background:#eef3ff;border-radius:4px;padding:4px 6px;white-space:nowrap}
@@ -121,6 +123,19 @@
       .summary-scroll-fixed { right: 7px; bottom: 7px; padding: 3px 7px 2px 7px;}
       .summary-scroll-fixed img { width:27px; height:27px;}
     }
+    .summary-disappear {
+      display: inline-block;
+      color: #fff;
+      background: #b20e0e;
+      border-radius: 8px;
+      font-size: 12px;
+      padding: 2px 7px;
+      margin-left: 10px;
+      position: relative;
+      top: -3px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
@@ -131,12 +146,13 @@
   裝備類型：<select id="equipType">
     <option value="glove">🧤 防具 (5捲)</option>
     <option value="weapon">⚔️ 武器 (7捲)</option>
+    <option value="set">🦺 套服 (10捲)</option>
   </select>
   ｜裝備數量：<input id="equipCount" type="number" min="1" value="1" style="width:50px">
   <button onclick="generateEquips()">➕生成裝備</button>
-  <button onclick="resetAll()">🔄 重製全部</button>
-  <button onclick="autoFinishAllOnce()">🕹️ 全衝一捲</button>
+  <button onclick="resetAll()">🔄 重置裝備</button>
   <button onclick="autoFinishAll()">⚡ 全部衝完</button>
+  <button onclick="autoFinishAllOnce()">🕹️ 全衝一捲</button>
 </div>
 
 <div id="summary"></div>
@@ -146,18 +162,17 @@
 </div>
 
 <script>
-const equipMax = { glove: 5, weapon: 7 };
-const equipImg = { glove: 'glove.png', weapon: 'weapon.png' };
+const equipMax = { glove: 5, weapon: 7, set: 10 };
+const equipImg = { glove: 'glove.png', weapon: 'weapon.png', set: 'set.png' };
 
-let total60 = 0, total10 = 0, totalSucc = 0, totalUsed = 0;
+let total70 = 0, total60 = 0, total30 = 0, total10 = 0, totalSucc = 0, totalUsed = 0;
 let selectedScroll = null;
 let equipIndex = 1;
 window.equips = [];
 
-// 標記失敗
 function markFailedEquips() {
   window.equips.forEach(e => {
-    if (e.dataset.dian === "1") return;
+    if (e.dataset.dian === "1" || e.classList.contains('disappear')) return;
     const used = +e.dataset.used, succ = +e.dataset.succ, max = +e.dataset.max;
     if (used > succ && used > 0 && succ < max) {
       e.classList.add('failed');
@@ -185,20 +200,26 @@ function addEquip(type, isDian) {
   div.dataset.max = isDian ? 999 : equipMax[type];
   div.dataset.used = 0;
   div.dataset.succ = 0;
+  div.dataset.used70 = 0;
   div.dataset.used60 = 0;
+  div.dataset.used30 = 0;
   div.dataset.used10 = 0;
   div.dataset.idx = idx;
   div.dataset.type = type;
   div.dataset.dian = isDian ? "1" : "";
+  div.dataset.disappear = "";
 
-  // 計算目前已存在的非墊捲裝備數
   const realNo = isDian ? '' : (window.equips.filter(e => e.dataset.dian !== "1").length + 1);
 
   div.innerHTML = `
     <div class="equip-title" id="title-${idx}">
       ${isDian
         ? '🟧 墊卷裝備（0/N）'
-        : (type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ' #' + realNo + `（0/${equipMax[type]}）`
+        : (
+            type === 'glove' ? '🧤 防具' :
+            type === 'weapon' ? '⚔️ 武器' :
+            type === 'set' ? '🦺 套服' : '裝備'
+          ) + ' #' + realNo + `（0/${equipMax[type]}）`
       }
     </div>
     <div style="text-align:center"><img src="${equipImg[type]}" onerror="this.style.display='none'"></div>
@@ -207,10 +228,12 @@ function addEquip(type, isDian) {
   div.ondragover = e => e.preventDefault();
   div.ondrop = e => {
     e.preventDefault();
+    if (div.classList.contains('disappear')) return;
     const rate = selectedScroll;
     applyScroll(div, rate);
   };
   div.addEventListener('pointerup', () => {
+    if (div.classList.contains('disappear')) return;
     if (selectedScroll !== null) applyScroll(div, selectedScroll);
   });
   window.equips.push(div);
@@ -219,7 +242,7 @@ function addEquip(type, isDian) {
 
 function generateEquips() {
   window.equips = [];
-  total60 = total10 = totalSucc = totalUsed = 0;
+  total70 = total60 = total30 = total10 = totalSucc = totalUsed = 0;
   selectedScroll = null;
   equipIndex = 1;
   addEquip('glove', true);
@@ -236,21 +259,60 @@ function addSingleEquip() {
   updateSummary();
 }
 
+// 失敗時要消失的處理
+function disappearEquip(equip) {
+  equip.classList.add('disappear');
+  equip.dataset.disappear = "1";
+  equip.classList.remove('failed');
+  const idx = equip.dataset.idx;
+  document.getElementById('title-' + idx).innerText = "💀 已消失";
+  document.getElementById('log-' + idx).innerHTML += '<span style="color:#fff;background:#c00;padding:0 4px;border-radius:4px;">裝備已消失</span>';
+}
+
+// 主要衝捲
 function applyScroll(equip, rate) {
-  if (isNaN(rate) || equip.dataset.lock) return;
+  if (isNaN(rate) || equip.dataset.lock || equip.classList.contains('disappear')) return;
   equip.dataset.lock = '1';
   requestAnimationFrame(() => delete equip.dataset.lock);
   let used = +equip.dataset.used, succ = +equip.dataset.succ;
   const max = +equip.dataset.max, idx = equip.dataset.idx, isDian = equip.dataset.dian === "1";
   if (!isDian && used >= max) { alert('❌ 此裝備已無法再使用卷軸！'); return; }
-  const ok = Math.random() <= rate / 100;
-  if (ok) succ++;
-  used++;
-  equip.dataset.used = used; equip.dataset.succ = succ;
-  if (rate === 60) {
-    equip.dataset.used60 = +equip.dataset.used60 + 1;
-  } else if (rate === 10) {
-    equip.dataset.used10 = +equip.dataset.used10 + 1;
+  let ok = Math.random() <= rate / 100;
+
+  // 70%、30%卷軸：失敗時50%機率直接消失
+  if ((rate === 70 || rate === 30) && !ok) {
+    used++;
+    if (rate === 70) {
+      equip.dataset.used70 = +equip.dataset.used70 + 1;
+      total70++;
+    } else if (rate === 30) {
+      equip.dataset.used30 = +equip.dataset.used30 + 1;
+      total30++;
+    }
+    equip.dataset.used = used;
+    if (Math.random() < 0.5) {
+      disappearEquip(equip);
+      markFailedEquips();
+      updateSummary();
+      return;
+    }
+  } else {
+    if (ok) succ++;
+    used++;
+    equip.dataset.used = used; equip.dataset.succ = succ;
+    if (rate === 70) {
+      equip.dataset.used70 = +equip.dataset.used70 + 1;
+      total70++;
+    } else if (rate === 60) {
+      equip.dataset.used60 = +equip.dataset.used60 + 1;
+      total60++;
+    } else if (rate === 30) {
+      equip.dataset.used30 = +equip.dataset.used30 + 1;
+      total30++;
+    } else if (rate === 10) {
+      equip.dataset.used10 = +equip.dataset.used10 + 1;
+      total10++;
+    }
   }
   if (ok) totalSucc++;
   totalUsed++;
@@ -259,11 +321,14 @@ function applyScroll(equip, rate) {
 
   if(isDian){
     document.getElementById('title-' + idx).innerText = `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`;
-  } else {
+  } else if (!equip.classList.contains('disappear')) {
     const equipsArr = window.equips.filter(e => e.dataset.dian !== "1");
     const cardNo = equipsArr.findIndex(e => e.dataset.idx == idx) + 1;
     document.getElementById('title-' + idx).innerText =
-      (equip.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
+      (equip.dataset.type === 'glove' ? '🧤 防具' :
+       equip.dataset.type === 'weapon' ? '⚔️ 武器' :
+       equip.dataset.type === 'set' ? '🦺 套服' : '裝備') +
+      ` #${cardNo}（${succ}/${max}）`;
   }
   const log = document.getElementById('log-' + idx);
   if (used === 1) log.innerHTML = '';
@@ -271,98 +336,148 @@ function applyScroll(equip, rate) {
   log.scrollTop = log.scrollHeight;
 }
 
-// 一鍵全部衝完
 function autoFinishAll() {
-  if (selectedScroll !== 60 && selectedScroll !== 10) {
+  if (![70,60,30,10].includes(selectedScroll)) {
     alert("請先選擇要使用的卷軸！");
     return;
   }
   window.equips.forEach(equip => {
-    if (equip.dataset.dian === "1") return; // 跳過墊捲
+    if (equip.dataset.dian === "1" || equip.classList.contains('disappear')) return;
     let used = +equip.dataset.used;
     let succ = +equip.dataset.succ;
     let max = +equip.dataset.max;
     const idx = equip.dataset.idx;
     const log = document.getElementById('log-' + idx);
     if (used === 0) log.innerHTML = '';
-    let countToAdd = max - used;
     while (used < max) {
-      const ok = Math.random() <= selectedScroll / 100;
-      if (ok) succ++;
-      used++;
-      log.innerHTML += `第 ${used}/${max} 次 (${selectedScroll}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
+      if (equip.classList.contains('disappear')) break;
+      let ok = Math.random() <= selectedScroll / 100;
+      if ((selectedScroll === 70 || selectedScroll === 30) && !ok) {
+        used++;
+        if (selectedScroll === 70) {
+          equip.dataset.used70 = +equip.dataset.used70 + 1;
+          total70++;
+        } else if (selectedScroll === 30) {
+          equip.dataset.used30 = +equip.dataset.used30 + 1;
+          total30++;
+        }
+        equip.dataset.used = used;
+        log.innerHTML += `第 ${used}/${max} 次 (${selectedScroll}%): ❌ 失敗<br>`;
+        if (Math.random() < 0.5) {
+          disappearEquip(equip);
+          break;
+        }
+      } else {
+        if (ok) succ++;
+        used++;
+        equip.dataset.used = used; equip.dataset.succ = succ;
+        if (selectedScroll === 70) {
+          equip.dataset.used70 = +equip.dataset.used70 + 1;
+          total70++;
+        } else if (selectedScroll === 60) {
+          equip.dataset.used60 = +equip.dataset.used60 + 1;
+          total60++;
+        } else if (selectedScroll === 30) {
+          equip.dataset.used30 = +equip.dataset.used30 + 1;
+          total30++;
+        } else if (selectedScroll === 10) {
+          equip.dataset.used10 = +equip.dataset.used10 + 1;
+          total10++;
+        }
+        log.innerHTML += `第 ${used}/${max} 次 (${selectedScroll}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
+      }
     }
     equip.dataset.used = used;
     equip.dataset.succ = succ;
-    if (selectedScroll === 60) {
-      equip.dataset.used60 = +equip.dataset.used60 + countToAdd;
-    } else if (selectedScroll === 10) {
-      equip.dataset.used10 = +equip.dataset.used10 + countToAdd;
-    }
   });
   markFailedEquips();
-  // 標題同步刷新
   window.equips.forEach(equip => {
     const idx = equip.dataset.idx, isDian = equip.dataset.dian === "1";
     const used = +equip.dataset.used, succ = +equip.dataset.succ, max = +equip.dataset.max;
     if (isDian) {
       document.getElementById('title-' + idx).innerText = `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`;
       document.getElementById('log-' + idx).innerText = '尚未使用卷軸';
-    } else {
+    } else if (!equip.classList.contains('disappear')) {
       const equipsArr = window.equips.filter(e => e.dataset.dian !== "1");
       const cardNo = equipsArr.findIndex(e => e.dataset.idx == idx) + 1;
       document.getElementById('title-' + idx).innerText =
-        (equip.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
+        (equip.dataset.type === 'glove' ? '🧤 防具' :
+         equip.dataset.type === 'weapon' ? '⚔️ 武器' :
+         equip.dataset.type === 'set' ? '🦺 套服' : '裝備') +
+        ` #${cardNo}（${succ}/${max}）`;
     }
   });
-  // 統計資料刷新
   updateSummary();
 }
 
-// 一鍵全部衝一捲
 function autoFinishAllOnce() {
-  if (selectedScroll !== 60 && selectedScroll !== 10) {
+  if (![70,60,30,10].includes(selectedScroll)) {
     alert("請先選擇要使用的卷軸！");
     return;
   }
   window.equips.forEach(equip => {
-    if (equip.dataset.dian === "1") return; // 跳過墊捲
+    if (equip.dataset.dian === "1" || equip.classList.contains('disappear')) return;
     let used = +equip.dataset.used;
     let succ = +equip.dataset.succ;
     let max = +equip.dataset.max;
-    if (used < max) {
-      const ok = Math.random() <= selectedScroll / 100;
-      if (ok) succ++;
-      used++;
-      equip.dataset.used = used;
-      equip.dataset.succ = succ;
-      if (selectedScroll === 60) {
-        equip.dataset.used60 = +equip.dataset.used60 + 1;
-      } else if (selectedScroll === 10) {
-        equip.dataset.used10 = +equip.dataset.used10 + 1;
+    if (used < max && !equip.classList.contains('disappear')) {
+      let ok = Math.random() <= selectedScroll / 100;
+      if ((selectedScroll === 70 || selectedScroll === 30) && !ok) {
+        used++;
+        if (selectedScroll === 70) {
+          equip.dataset.used70 = +equip.dataset.used70 + 1;
+          total70++;
+        } else if (selectedScroll === 30) {
+          equip.dataset.used30 = +equip.dataset.used30 + 1;
+          total30++;
+        }
+        equip.dataset.used = used;
+        const log = document.getElementById('log-' + equip.dataset.idx);
+        if (used === 1) log.innerHTML = '';
+        log.innerHTML += `第 ${used}/${max} 次 (${selectedScroll}%): ❌ 失敗<br>`;
+        if (Math.random() < 0.5) {
+          disappearEquip(equip);
+        }
+      } else {
+        if (ok) succ++;
+        used++;
+        equip.dataset.used = used;
+        equip.dataset.succ = succ;
+        if (selectedScroll === 70) {
+          equip.dataset.used70 = +equip.dataset.used70 + 1;
+          total70++;
+        } else if (selectedScroll === 60) {
+          equip.dataset.used60 = +equip.dataset.used60 + 1;
+          total60++;
+        } else if (selectedScroll === 30) {
+          equip.dataset.used30 = +equip.dataset.used30 + 1;
+          total30++;
+        } else if (selectedScroll === 10) {
+          equip.dataset.used10 = +equip.dataset.used10 + 1;
+          total10++;
+        }
+        const log = document.getElementById('log-' + equip.dataset.idx);
+        if (used === 1) log.innerHTML = '';
+        log.innerHTML += `第 ${used}/${max} 次 (${selectedScroll}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
       }
-      // 更新log
-      const idx = equip.dataset.idx;
-      const log = document.getElementById('log-' + idx);
-      if (used === 1) log.innerHTML = '';
-      log.innerHTML += `第 ${used}/${max} 次 (${selectedScroll}%): ${ok ? '✅ 成功' : '❌ 失敗'}<br>`;
     }
   });
   markFailedEquips();
-  // 標題同步刷新
   window.equips.forEach(equip => {
     const idx = equip.dataset.idx, isDian = equip.dataset.dian === "1";
     const used = +equip.dataset.used, succ = +equip.dataset.succ, max = +equip.dataset.max;
     if (isDian) {
       document.getElementById('title-' + idx).innerText = `🟧 墊卷裝備（${succ ? succ : 'N'}/N）`;
-    } else {
+    } else if (!equip.classList.contains('disappear')) {
       const equipsArr = window.equips.filter(e => e.dataset.dian !== "1");
       const cardNo = equipsArr.findIndex(e => e.dataset.idx == idx) + 1;
       document.getElementById('title-' + idx).innerText =
-        (equip.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（${succ}/${max}）`;
+        (equip.dataset.type === 'glove' ? '🧤 防具' :
+         equip.dataset.type === 'weapon' ? '⚔️ 武器' :
+         equip.dataset.type === 'set' ? '🦺 套服' : '裝備') +
+        ` #${cardNo}（${succ}/${max}）`;
     }
   });
-  // 統計資料刷新
   updateSummary();
 }
 
@@ -373,7 +488,7 @@ function atLeastOnePerfect(prob) {
 }
 function getEachPerfectProb(rate) {
   let equips = window.equips.filter(e =>
-    e.dataset.dian !== "1" && !e.classList.contains('failed') && +e.dataset.used < +e.dataset.max
+    e.dataset.dian !== "1" && !e.classList.contains('failed') && +e.dataset.used < +e.dataset.max && !e.classList.contains('disappear')
   );
   let arr = [];
   for (let e of equips) {
@@ -385,7 +500,7 @@ function getEachPerfectProb(rate) {
 function countFullPass() {
   let cnt = 0, max = 0;
   window.equips.forEach(e => {
-    if (e.dataset.dian === "1") return;
+    if (e.dataset.dian === "1" || e.classList.contains('disappear')) return;
     const s = +e.dataset.succ, m = +e.dataset.max;
     if (s === m && m > 0) cnt++;
     if (m > max) max = m;
@@ -395,7 +510,7 @@ function countFullPass() {
 function buildStatBar() {
   let stat = {}, max = 0, maxValue = 0;
   window.equips.forEach(e => {
-    if (e.dataset.dian === "1") return;
+    if (e.dataset.dian === "1" || e.classList.contains('disappear')) return;
     const s = parseInt(e.dataset.succ), m = +e.dataset.max;
     if (m > max) max = m;
     stat[s] = (stat[s] || 0) + 1;
@@ -416,33 +531,45 @@ function buildStatBar() {
   return html;
 }
 function updateSummary() {
-  // 用每件裝備的 used60/used10 做加總
-  total60 = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used60),0);
-  total10 = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used10),0);
-  totalSucc = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.succ),0);
-  totalUsed = window.equips.filter(e=>e.dataset.dian!=="1").reduce((a,e)=>a+(+e.dataset.used),0);
+  total70 = window.equips.filter(e=>e.dataset.dian!=="1" && !e.classList.contains('disappear')).reduce((a,e)=>a+(+e.dataset.used70),0);
+  total60 = window.equips.filter(e=>e.dataset.dian!=="1" && !e.classList.contains('disappear')).reduce((a,e)=>a+(+e.dataset.used60),0);
+  total30 = window.equips.filter(e=>e.dataset.dian!=="1" && !e.classList.contains('disappear')).reduce((a,e)=>a+(+e.dataset.used30),0);
+  total10 = window.equips.filter(e=>e.dataset.dian!=="1" && !e.classList.contains('disappear')).reduce((a,e)=>a+(+e.dataset.used10),0);
+  totalSucc = window.equips.filter(e=>e.dataset.dian!=="1" && !e.classList.contains('disappear')).reduce((a,e)=>a+(+e.dataset.succ),0);
+  totalUsed = window.equips.filter(e=>e.dataset.dian!=="1" && !e.classList.contains('disappear')).reduce((a,e)=>a+(+e.dataset.used),0);
+  const disappearCount = window.equips.filter(e=>e.classList.contains('disappear')).length;
 
   const rate = totalUsed ? (totalSucc / totalUsed * 100).toFixed(3) : '0.000';
+  const prob70Arr = getEachPerfectProb(70);
   const prob60Arr = getEachPerfectProb(60);
+  const prob30Arr = getEachPerfectProb(30);
   const prob10Arr = getEachPerfectProb(10);
   const {cnt: fullCnt, max: maxRoll} = countFullPass();
   let passStr = '';
   if (fullCnt > 0) {
     passStr = `<span style="color:#D4A000;"><b>已達成全過裝備數量：${fullCnt} 件</b></span>`;
   } else {
+    const atLeastOne70 = (atLeastOnePerfect(prob70Arr) * 100).toFixed(3);
     const atLeastOne60 = (atLeastOnePerfect(prob60Arr) * 100).toFixed(3);
+    const atLeastOne30 = (atLeastOnePerfect(prob30Arr) * 100).toFixed(3);
     const atLeastOne10 = (atLeastOnePerfect(prob10Arr) * 100).toFixed(3);
     passStr = `<b>剩餘裝備「至少有一件全過」機率：</b><br>
+     ▶️ 70%卷軸全過：${atLeastOne70}%<br>
      ▶️ 60%卷軸全過：${atLeastOne60}%<br>
+     ▶️ 30%卷軸全過：${atLeastOne30}%<br>
      ▶️ 10%卷軸全過：${atLeastOne10}%`;
   }
 
   let scrollLabel = "選擇卷軸";
+  if (selectedScroll === 70) scrollLabel = "70%捲";
   if (selectedScroll === 60) scrollLabel = "60%捲";
+  if (selectedScroll === 30) scrollLabel = "30%捲";
   if (selectedScroll === 10) scrollLabel = "10%捲";
 
   document.getElementById('summary').innerHTML =
-    `60% 卷軸：${total60} 張｜10% 卷軸：${total10} 張｜成功：${totalSucc} / ${totalUsed}（${rate} %）<br>
+    `70% 卷軸：${total70} 張｜60% 卷軸：${total60} 張｜30% 卷軸：${total30} 張｜10% 卷軸：${total10} 張｜成功：${totalSucc} / ${totalUsed}（${rate} %）
+     <span class="summary-disappear" title="已消失裝備數">${disappearCount > 0 ? `消失：${disappearCount}` : ""}</span>
+     <br>
      🎯 <b>成功捲數分布：</b> ${buildStatBar()}
      <hr style="border:0;border-top:1px dashed #aaa; margin:7px 0 4px 0">
      ${passStr}
@@ -450,11 +577,12 @@ function updateSummary() {
         <div style="width:100%;font-size:13px; color:#885; margin-bottom:3px; text-align:center;">
           ${scrollLabel}
         </div>
+        <img src="scroll70.png" data-rate="70" title="70% 卷軸">
         <img src="scroll60.png" data-rate="60" title="60% 卷軸">
+        <img src="scroll30.png" data-rate="30" title="30% 卷軸">
         <img src="scroll10.png" data-rate="10" title="10% 卷軸">
      </div>`;
 
-  // 卷軸選擇區點選、拖曳事件重新綁定
   document.querySelectorAll('.summary-scroll-fixed img').forEach(img => {
     img.addEventListener('click', () => {
       selectedScroll = parseInt(img.dataset.rate);
@@ -471,19 +599,22 @@ function resetAll() {
   window.equips.forEach(e => {
     const max = +e.dataset.max, idx = e.dataset.idx, isDian = e.dataset.dian === "1";
     e.dataset.used = 0; e.dataset.succ = 0; e.classList.remove('failed');
-    e.dataset.used60 = 0; e.dataset.used10 = 0;
+    e.dataset.used70 = 0; e.dataset.used60 = 0; e.dataset.used30 = 0; e.dataset.used10 = 0;
+    e.classList.remove('disappear'); e.dataset.disappear = "";
     if(isDian){
       document.getElementById('title-' + idx).innerText = '🟧 墊卷裝備（N/N）';
     } else {
       const equipsArr = window.equips.filter(e2 => e2.dataset.dian !== "1");
       const cardNo = equipsArr.findIndex(e2 => e2.dataset.idx == idx) + 1;
       document.getElementById('title-' + idx).innerText =
-        (e.dataset.type === 'glove' ? '🧤 防具' : '⚔️ 武器') + ` #${cardNo}（0/${max}）`;
+        (e.dataset.type === 'glove' ? '🧤 防具' :
+         e.dataset.type === 'weapon' ? '⚔️ 武器' :
+         e.dataset.type === 'set' ? '🦺 套服' : '裝備') +
+        ` #${cardNo}（0/${max}）`;
     }
     document.getElementById('log-' + idx).innerText = '尚未使用卷軸';
   });
-  total60 = total10 = totalSucc = totalUsed = 0;
-  selectedScroll = null;
+  total70 = total60 = total30 = total10 = totalSucc = totalUsed = 0;
   markFailedEquips();
   updateSummary();
 }
